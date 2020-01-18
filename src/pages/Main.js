@@ -17,6 +17,7 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { MaterialIcons } from '@expo/vector-icons';
 import api from '../services/api';
+import { connect, disconnect, subscribeTonewDevs } from '../services/socket';
 
 export default function Main({ navigation }) {
   const [devs, setDevs] = useState([]);
@@ -42,6 +43,15 @@ export default function Main({ navigation }) {
     loadInitialPosition();
   }, []);
 
+  useEffect(() => {
+    subscribeTonewDevs(dev => setDevs([...devs, dev]));
+  }, [devs]);
+
+  function setupWebsocket() {
+    disconnect();
+    const { latitude, longitude } = currentRegion;
+    connect(latitude, longitude, techs);
+  }
   async function loadDevs() {
     const response = await api.get('/search', {
       params: {
@@ -51,7 +61,7 @@ export default function Main({ navigation }) {
       },
     });
     setDevs(response.data);
-    console.log(response.data);
+    setupWebsocket();
   }
 
   function hadleRegionChanged(region) {
